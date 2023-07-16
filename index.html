@@ -1,0 +1,1923 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Star Wars game</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background-color: #f0f0f0;
+        font-family: Arial, sans-serif;
+        text-align: center;
+        overflow: hidden;
+      }
+
+      h1 {
+        margin-top: 30px;
+        font-size: 28px;
+        color: #87ceeb;
+      }
+
+      .difficulty-button {
+        margin-top: 20px;
+        padding: 10px 20px;
+        font-size: 20px;
+      }
+
+      #start-button {
+        margin-top: 20px;
+        padding: 10px 20px;
+        font-size: 24px;
+        color: rgb(236, 228, 228);
+      }
+
+      #game-container {
+        display: none;
+        position: relative;
+        height: 100vh;
+        width: 100%;
+      }
+
+      #game-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        background-color: #fff;
+        background-image: url(starsWar.jpg);
+        background-size: cover;
+      }
+
+      #game-controls {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+      }
+
+      .game-button {
+        margin-top: 10px;
+        padding: 10px 20px;
+        font-size: 20px;
+        background-color: #4090b5;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        text-transform: uppercase;
+        transition: background-color 0.3s ease;
+      }
+
+      .game-button:hover {
+        background-color: #099198;
+      }
+
+      .game-button:active {
+        background-color: #176e72;
+      }
+
+      #popup {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+      }
+
+      #popup-content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      }
+
+      #popup-button {
+        margin-top: 10px;
+        padding: 10px 20px;
+        font-size: 20px;
+        background-color: #4caf50;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      .center {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        height: calc(100vh);
+        background-image: url(/eva.jpg);
+        background-size: cover;
+      }
+
+      .explosion {
+        position: absolute;
+        pointer-events: none;
+        visibility: hidden;
+        animation: explosionAnimation 0.5s steps(12) forwards;
+        z-index: 1;
+        top: 0;
+      }
+
+      @keyframes explosionAnimation {
+        0% {
+          opacity: 0;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+
+      .difficulty-button[data-selected="true"] {
+        background-color: red;
+      }
+
+      #loader {
+        width: 80px;
+        height: 40px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        margin: -20px -40px;
+        z-index: 1000;
+      }
+
+      .lightsaber {
+        position: absolute;
+        width: 4px;
+        height: 12px;
+        background-color: #666;
+        border-radius: 1px;
+        bottom: 0;
+      }
+
+      .lightsaber.ls-left {
+        left: 0;
+      }
+
+      .lightsaber.ls-right {
+        right: 0;
+      }
+
+      .lightsaber:before {
+        position: absolute;
+        content: " ";
+        display: block;
+        width: 2px;
+        height: 25px;
+        max-height: 1px;
+        left: 1px;
+        top: 1px;
+        background-color: #fff;
+        border-radius: 1px;
+        -webkit-transform: rotateZ(180deg);
+        transform: rotateZ(180deg);
+        -webkit-transform-origin: center top;
+        -ms-transform-origin: center top;
+        transform-origin: center top;
+      }
+
+      .lightsaber:after {
+        position: absolute;
+        content: " ";
+        display: block;
+        width: 2px;
+        height: 2px;
+        left: 1px;
+        top: 4px;
+        background-color: #fff;
+        border-radius: 50%;
+      }
+
+      .ls-particles {
+        position: absolute;
+        left: 42px;
+        top: 10px;
+        width: 1px;
+        height: 5px;
+        background-color: rgb(51, 51, 51, 0);
+        -webkit-transform: rotateZ(0deg);
+        transform: rotateZ(0deg);
+      }
+
+      .lightsaber.ls-green:before {
+        -webkit-animation: showlightgreen 2s ease-in-out infinite 1s;
+        animation: showlightgreen 2s ease-in-out infinite 1s;
+      }
+
+      .lightsaber.ls-red:before {
+        -webkit-animation: showlightred 2s ease-in-out infinite 1s;
+        animation: showlightred 2s ease-in-out infinite 1s;
+      }
+
+      .lightsaber.ls-left {
+        -webkit-animation: fightleft 2s ease-in-out infinite 1s;
+        animation: fightleft 2s ease-in-out infinite 1s;
+      }
+
+      .lightsaber.ls-right {
+        -webkit-animation: fightright 2s ease-in-out infinite 1s;
+        animation: fightright 2s ease-in-out infinite 1s;
+      }
+
+      .ls-particles.ls-part-1 {
+        -webkit-animation: particles1 2s ease-out infinite 1s;
+        animation: particles1 2s ease-out infinite 1s;
+      }
+
+      .ls-particles.ls-part-2 {
+        -webkit-animation: particles2 2s ease-out infinite 1s;
+        animation: particles2 2s ease-out infinite 1s;
+      }
+
+      .ls-particles.ls-part-3 {
+        -webkit-animation: particles3 2s ease-out infinite 1s;
+        animation: particles3 2s ease-out infinite 1s;
+      }
+
+      .ls-particles.ls-part-4 {
+        -webkit-animation: particles4 2s ease-out infinite 1s;
+        animation: particles4 2s ease-out infinite 1s;
+      }
+
+      .ls-particles.ls-part-5 {
+        -webkit-animation: particles5 2s ease-out infinite 1s;
+        animation: particles5 2s ease-out infinite 1s;
+      }
+
+      @-webkit-keyframes showlightgreen {
+        0% {
+          max-height: 0;
+          box-shadow: 0 0 0 0 #87c054;
+        }
+
+        5% {
+          box-shadow: 0 0 4px 2px #87c054;
+        }
+
+        10% {
+          max-height: 22px;
+        }
+
+        80% {
+          max-height: 22px;
+        }
+
+        85% {
+          box-shadow: 0 0 4px 2px #87c054;
+        }
+
+        100% {
+          max-height: 0;
+          box-shadow: 0 0 0 0 #87c054;
+        }
+      }
+
+      @-webkit-keyframes showlightred {
+        0% {
+          max-height: 0;
+          box-shadow: 0 0 0 0 #f06363;
+        }
+
+        20% {
+          box-shadow: 0 0 4px 2px #f06363;
+        }
+
+        25% {
+          max-height: 22px;
+        }
+
+        80% {
+          max-height: 22px;
+        }
+
+        85% {
+          box-shadow: 0 0 4px 2px #f06363;
+        }
+
+        100% {
+          max-height: 0;
+          box-shadow: 0 0 0 0 #f06363;
+        }
+      }
+
+      @-webkit-keyframes fightleft {
+        0% {
+          -webkit-transform: rotateZ(0deg);
+          transform: rotateZ(0deg);
+          left: 0;
+          bottom: 0;
+        }
+
+        30% {
+          -webkit-transform: rotateZ(0deg);
+          transform: rotateZ(0deg);
+          bottom: 0;
+        }
+
+        40% {
+          -webkit-transform: rotateZ(45deg);
+          transform: rotateZ(45deg);
+          left: 0;
+          bottom: 2px;
+        }
+
+        45% {
+          -webkit-transform: rotateZ(65deg);
+          transform: rotateZ(65deg);
+          left: 0;
+        }
+
+        65% {
+          -webkit-transform: rotateZ(410deg);
+          transform: rotateZ(410deg);
+          left: 30px;
+          bottom: 10px;
+        }
+
+        95% {
+          -webkit-transform: rotateZ(410deg);
+          transform: rotateZ(410deg);
+          left: 0;
+          bottom: 0;
+        }
+
+        100% {
+          -webkit-transform: rotateZ(360deg);
+          transform: rotateZ(360deg);
+          left: 0;
+          bottom: 0;
+        }
+      }
+
+      @-webkit-keyframes fightright {
+        0% {
+          -webkit-transform: rotateZ(0deg);
+          transform: rotateZ(0deg);
+          right: 0;
+          bottom: 0;
+        }
+
+        30% {
+          -webkit-transform: rotateZ(0deg);
+          transform: rotateZ(0deg);
+          bottom: 0;
+        }
+
+        45% {
+          -webkit-transform: rotateZ(-45deg);
+          transform: rotateZ(-45deg);
+          right: 0;
+          bottom: 2px;
+        }
+
+        50% {
+          -webkit-transform: rotateZ(-65deg);
+          transform: rotateZ(-65deg);
+          right: 0;
+        }
+
+        68% {
+          -webkit-transform: rotateZ(-410deg);
+          transform: rotateZ(-410deg);
+          right: 27px;
+          bottom: 13px;
+        }
+
+        95% {
+          -webkit-transform: rotateZ(-410deg);
+          transform: rotateZ(-410deg);
+          right: 0;
+          bottom: 0;
+        }
+
+        100% {
+          -webkit-transform: rotateZ(-360deg);
+          transform: rotateZ(-360deg);
+          right: 0;
+          bottom: 0;
+        }
+      }
+
+      @-webkit-keyframes particles1 {
+        0% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(35deg) translateY(0px);
+          transform: rotateZ(35deg) translateY(0px);
+        }
+
+        63% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(35deg) translateY(0px);
+          transform: rotateZ(35deg) translateY(0px);
+        }
+
+        64% {
+          background-color: rgba(51, 51, 51, 1);
+          -webkit-transform: rotateZ(35deg) translateY(0px);
+          transform: rotateZ(35deg) translateY(0px);
+        }
+
+        100% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(35deg) translateY(-30px);
+          transform: rotateZ(35deg) translateY(-30px);
+        }
+      }
+
+      @-webkit-keyframes particles2 {
+        0% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(-65deg) translateY(0px);
+          transform: rotateZ(-65deg) translateY(0px);
+        }
+
+        63% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(-65deg) translateY(0px);
+          transform: rotateZ(-65deg) translateY(0px);
+        }
+
+        64% {
+          background-color: rgba(51, 51, 51, 1);
+          -webkit-transform: rotateZ(-65deg) translateY(0px);
+          transform: rotateZ(-65deg) translateY(0px);
+        }
+
+        95% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(-65deg) translateY(-40px);
+          transform: rotateZ(-65deg) translateY(-40px);
+        }
+
+        100% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(-65deg) translateY(-40px);
+          transform: rotateZ(-65deg) translateY(-40px);
+        }
+      }
+
+      @-webkit-keyframes particles3 {
+        0% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(-75deg) translateY(0px);
+          transform: rotateZ(-75deg) translateY(0px);
+        }
+
+        63% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(-75deg) translateY(0px);
+          transform: rotateZ(-75deg) translateY(0px);
+        }
+
+        64% {
+          background-color: rgba(51, 51, 51, 1);
+          -webkit-transform: rotateZ(-75deg) translateY(0px);
+          transform: rotateZ(-75deg) translateY(0px);
+        }
+
+        97% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(-75deg) translateY(-35px);
+          transform: rotateZ(-75deg) translateY(-35px);
+        }
+
+        100% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(-75deg) translateY(-35px);
+          transform: rotateZ(-75deg) translateY(-35px);
+        }
+      }
+
+      @-webkit-keyframes particles4 {
+        0% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(-25deg) translateY(0px);
+          transform: rotateZ(-25deg) translateY(0px);
+        }
+
+        63% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(-25deg) translateY(0px);
+          transform: rotateZ(-25deg) translateY(0px);
+        }
+
+        64% {
+          background-color: rgba(51, 51, 51, 1);
+          -webkit-transform: rotateZ(-25deg) translateY(0px);
+          transform: rotateZ(-25deg) translateY(0px);
+        }
+
+        97% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(-25deg) translateY(-30px);
+          transform: rotateZ(-25deg) translateY(-30px);
+        }
+
+        100% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(-25deg) translateY(-30px);
+          transform: rotateZ(-25deg) translateY(-30px);
+        }
+      }
+
+      @-webkit-keyframes particles5 {
+        0% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(65deg) translateY(0px);
+          transform: rotateZ(65deg) translateY(0px);
+        }
+
+        63% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(65deg) translateY(0px);
+          transform: rotateZ(65deg) translateY(0px);
+        }
+
+        64% {
+          background-color: rgba(51, 51, 51, 1);
+          -webkit-transform: rotateZ(65deg) translateY(0px);
+          transform: rotateZ(65deg) translateY(0px);
+        }
+
+        97% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(65deg) translateY(-35px);
+          transform: rotateZ(65deg) translateY(-35px);
+        }
+
+        100% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(65deg) translateY(-35px);
+          transform: rotateZ(65deg) translateY(-35px);
+        }
+      }
+
+      @keyframes showlightgreen {
+        0% {
+          max-height: 0;
+          box-shadow: 0 0 0 0 #87c054;
+        }
+
+        5% {
+          box-shadow: 0 0 4px 2px #87c054;
+        }
+
+        10% {
+          max-height: 22px;
+        }
+
+        80% {
+          max-height: 22px;
+        }
+
+        85% {
+          box-shadow: 0 0 4px 2px #87c054;
+        }
+
+        100% {
+          max-height: 0;
+          box-shadow: 0 0 0 0 #87c054;
+        }
+      }
+
+      @keyframes showlightred {
+        0% {
+          max-height: 0;
+          box-shadow: 0 0 0 0 #f06363;
+        }
+
+        20% {
+          box-shadow: 0 0 4px 2px #f06363;
+        }
+
+        25% {
+          max-height: 22px;
+        }
+
+        80% {
+          max-height: 22px;
+        }
+
+        85% {
+          box-shadow: 0 0 4px 2px #f06363;
+        }
+
+        100% {
+          max-height: 0;
+          box-shadow: 0 0 0 0 #f06363;
+        }
+      }
+
+      @keyframes fightleft {
+        0% {
+          -webkit-transform: rotateZ(0deg);
+          transform: rotateZ(0deg);
+          left: 0;
+          bottom: 0;
+        }
+
+        30% {
+          -webkit-transform: rotateZ(0deg);
+          transform: rotateZ(0deg);
+          bottom: 0;
+        }
+
+        40% {
+          -webkit-transform: rotateZ(45deg);
+          transform: rotateZ(45deg);
+          left: 0;
+          bottom: 2px;
+        }
+
+        45% {
+          -webkit-transform: rotateZ(65deg);
+          transform: rotateZ(65deg);
+          left: 0;
+        }
+
+        65% {
+          -webkit-transform: rotateZ(410deg);
+          transform: rotateZ(410deg);
+          left: 30px;
+          bottom: 10px;
+        }
+
+        95% {
+          -webkit-transform: rotateZ(410deg);
+          transform: rotateZ(410deg);
+          left: 0;
+          bottom: 0;
+        }
+
+        100% {
+          -webkit-transform: rotateZ(360deg);
+          transform: rotateZ(360deg);
+          left: 0;
+          bottom: 0;
+        }
+      }
+
+      @keyframes fightright {
+        0% {
+          -webkit-transform: rotateZ(0deg);
+          transform: rotateZ(0deg);
+          right: 0;
+          bottom: 0;
+        }
+
+        30% {
+          -webkit-transform: rotateZ(0deg);
+          transform: rotateZ(0deg);
+          bottom: 0;
+        }
+
+        45% {
+          -webkit-transform: rotateZ(-45deg);
+          transform: rotateZ(-45deg);
+          right: 0;
+          bottom: 2px;
+        }
+
+        50% {
+          -webkit-transform: rotateZ(-65deg);
+          transform: rotateZ(-65deg);
+          right: 0;
+        }
+
+        68% {
+          -webkit-transform: rotateZ(-410deg);
+          transform: rotateZ(-410deg);
+          right: 27px;
+          bottom: 13px;
+        }
+
+        95% {
+          -webkit-transform: rotateZ(-410deg);
+          transform: rotateZ(-410deg);
+          right: 0;
+          bottom: 0;
+        }
+
+        100% {
+          -webkit-transform: rotateZ(-360deg);
+          transform: rotateZ(-360deg);
+          right: 0;
+          bottom: 0;
+        }
+      }
+
+      @keyframes particles1 {
+        0% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(35deg) translateY(0px);
+          transform: rotateZ(35deg) translateY(0px);
+        }
+
+        63% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(35deg) translateY(0px);
+          transform: rotateZ(35deg) translateY(0px);
+        }
+
+        64% {
+          background-color: rgba(51, 51, 51, 1);
+          -webkit-transform: rotateZ(35deg) translateY(0px);
+          transform: rotateZ(35deg) translateY(0px);
+        }
+
+        100% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(35deg) translateY(-30px);
+          transform: rotateZ(35deg) translateY(-30px);
+        }
+      }
+
+      @keyframes particles2 {
+        0% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(-65deg) translateY(0px);
+          transform: rotateZ(-65deg) translateY(0px);
+        }
+
+        63% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(-65deg) translateY(0px);
+          transform: rotateZ(-65deg) translateY(0px);
+        }
+
+        64% {
+          background-color: rgba(51, 51, 51, 1);
+          -webkit-transform: rotateZ(-65deg) translateY(0px);
+          transform: rotateZ(-65deg) translateY(0px);
+        }
+
+        95% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(-65deg) translateY(-40px);
+          transform: rotateZ(-65deg) translateY(-40px);
+        }
+
+        100% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(-65deg) translateY(-40px);
+          transform: rotateZ(-65deg) translateY(-40px);
+        }
+      }
+
+      @keyframes particles3 {
+        0% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(-75deg) translateY(0px);
+          transform: rotateZ(-75deg) translateY(0px);
+        }
+
+        63% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(-75deg) translateY(0px);
+          transform: rotateZ(-75deg) translateY(0px);
+        }
+
+        64% {
+          background-color: rgba(51, 51, 51, 1);
+          -webkit-transform: rotateZ(-75deg) translateY(0px);
+          transform: rotateZ(-75deg) translateY(0px);
+        }
+
+        97% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(-75deg) translateY(-35px);
+          transform: rotateZ(-75deg) translateY(-35px);
+        }
+
+        100% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(-75deg) translateY(-35px);
+          transform: rotateZ(-75deg) translateY(-35px);
+        }
+      }
+
+      @keyframes particles4 {
+        0% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(-25deg) translateY(0px);
+          transform: rotateZ(-25deg) translateY(0px);
+        }
+
+        63% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(-25deg) translateY(0px);
+          transform: rotateZ(-25deg) translateY(0px);
+        }
+
+        64% {
+          background-color: rgba(51, 51, 51, 1);
+          -webkit-transform: rotateZ(-25deg) translateY(0px);
+          transform: rotateZ(-25deg) translateY(0px);
+        }
+
+        97% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(-25deg) translateY(-30px);
+          transform: rotateZ(-25deg) translateY(-30px);
+        }
+
+        100% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(-25deg) translateY(-30px);
+          transform: rotateZ(-25deg) translateY(-30px);
+        }
+      }
+
+      @keyframes particles5 {
+        0% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(65deg) translateY(0px);
+          transform: rotateZ(65deg) translateY(0px);
+        }
+
+        63% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(65deg) translateY(0px);
+          transform: rotateZ(65deg) translateY(0px);
+        }
+
+        64% {
+          background-color: rgba(51, 51, 51, 1);
+          -webkit-transform: rotateZ(65deg) translateY(0px);
+          transform: rotateZ(65deg) translateY(0px);
+        }
+
+        97% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(65deg) translateY(-35px);
+          transform: rotateZ(65deg) translateY(-35px);
+        }
+
+        100% {
+          background-color: rgba(51, 51, 51, 0);
+          -webkit-transform: rotateZ(65deg) translateY(-35px);
+          transform: rotateZ(65deg) translateY(-35px);
+        }
+      }
+
+      .full {
+        width: 100%;
+        height: 100vh;
+        background-color: black;
+      }
+
+      .container {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        font-style: italic;
+        font-weight: bold;
+        font-size: 1.2em;
+        display: grid;
+        gap: 2em;
+        place-content: center;
+        width: 400px;
+      }
+
+      .container input[type="radio"] {
+        display: none;
+      }
+
+      .input-btn:is(:checked) + .neon-btn .span {
+        inset: 2px;
+        background-color: #4090b5;
+        background: repeating-linear-gradient(
+            to bottom,
+            transparent 0%,
+            #4090b5 1px,
+            #4090b5 3px,
+            #4090b5 5px,
+            #4090b5 4px,
+            transparent 0.5%
+          ),
+          repeating-linear-gradient(
+            to left,
+            hsl(295, 60%, 12%) 100%,
+            hsl(295, 60%, 12%) 100%
+          );
+        box-shadow: inset 0 40px 20px hsl(296, 59%, 10%);
+      }
+
+      .input-btn:is(:checked) + .neon-btn .txt {
+        text-shadow: 2px 4px 1px #9e30a9, 2px 2px 1px #4090b5,
+          0 0 20px rgba(255, 255, 255, 0.616);
+        color: rgb(255, 255, 255);
+        animation: colorchange 0.3s ease;
+      }
+
+      .input-btn:is(:checked) + .neon-btn::before {
+        animation-duration: 0.6s;
+      }
+
+      .input-btn:is(:checked) + .neon-btn::after {
+        animation-duration: 0.6s;
+      }
+
+      .neon-btn {
+        width: 300px;
+        height: 60px;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0.5em 5em;
+        text-align: right;
+        background: transparent;
+        position: relative;
+        overflow: hidden;
+        transition: all 2s ease-in-out;
+        -webkit-clip-path: polygon(
+          6% 0,
+          93% 0,
+          100% 8%,
+          100% 86%,
+          90% 89%,
+          88% 100%,
+          5% 100%,
+          0% 85%
+        );
+        clip-path: polygon(
+          6% 0,
+          93% 0,
+          100% 8%,
+          100% 86%,
+          90% 89%,
+          88% 100%,
+          5% 100%,
+          0% 85%
+        );
+      }
+
+      .neon-btn .span {
+        display: flex;
+        -webkit-clip-path: polygon(
+          6% 0,
+          93% 0,
+          100% 8%,
+          100% 86%,
+          90% 89%,
+          88% 100%,
+          5% 100%,
+          0% 85%
+        );
+        clip-path: polygon(
+          6% 0,
+          93% 0,
+          100% 8%,
+          100% 86%,
+          90% 89%,
+          88% 100%,
+          5% 100%,
+          0% 85%
+        );
+        position: absolute;
+        inset: 1px;
+        background-color: #212121;
+        z-index: 1;
+      }
+
+      .neon-btn .txt {
+        text-align: right;
+        position: relative;
+        z-index: 2;
+        color: aliceblue;
+        font-size: 1em;
+        transition: all ease-in-out 2s linear;
+        text-shadow: 0px 0px 1px #4090b5, 0px 0px 1px #9e30a9, 0 0 1px white;
+      }
+
+      .neon-btn::before {
+        content: "";
+        position: absolute;
+        height: 300px;
+        aspect-ratio: 1.5/1;
+        box-shadow: -17px -19px 20px #9e30a9;
+        background-image: conic-gradient(
+          #9e30a9,
+          transparent,
+          transparent,
+          transparent,
+          transparent,
+          transparent,
+          transparent,
+          #9e30a9
+        );
+        animation: rotate 4s linear infinite -2s;
+      }
+
+      .neon-btn::after {
+        content: "";
+        position: absolute;
+        height: 300px;
+        aspect-ratio: 1.5/1;
+        box-shadow: -17px -19px 10px #4090b5;
+        background-image: conic-gradient(
+          #4090b5,
+          transparent,
+          transparent,
+          transparent,
+          transparent,
+          transparent,
+          transparent,
+          transparent,
+          #4090b5
+        );
+        animation: rotate 4s linear infinite;
+      }
+
+      @keyframes rotate {
+        0% {
+          transform: rotate(0deg);
+        }
+
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      @keyframes colorchange {
+        0% {
+          text-shadow: 0px 0px 0px #9e30a9, 0px 0px 0px #4090b5,
+            0 0 0px rgba(255, 255, 255, 0.616);
+        }
+
+        50% {
+          text-shadow: -6px 5px 1px #9e30a9, 5px 11px 1px #4090b5,
+            0 0 20px rgba(255, 255, 255, 0.616);
+        }
+
+        to {
+          text-shadow: 2px 4px 1px #9e30a9, 2px 2px 1px #4090b5,
+            0 0 20px rgba(255, 255, 255, 0.616);
+        }
+      }
+
+      @keyframes backgroundchange {
+        0% {
+          background-color: transparent;
+        }
+
+        50% {
+          background-color: #4090b5;
+        }
+
+        to {
+          background-color: transparent;
+        }
+      }
+
+      .start {
+        position: relative;
+        width: 11em;
+        height: 4em;
+        outline: none;
+        transition: 0.1s;
+        background-color: transparent;
+        border: none;
+        font-size: 13px;
+        font-weight: bold;
+        color: #ddebf0;
+      }
+
+      #clip {
+        --color: #2761c3;
+        position: absolute;
+        top: 0;
+        overflow: hidden;
+        width: 100%;
+        height: 100%;
+        border: 5px double var(--color);
+        box-shadow: inset 0px 0px 15px #195480;
+        -webkit-clip-path: polygon(
+          30% 0%,
+          70% 0%,
+          100% 30%,
+          100% 70%,
+          70% 100%,
+          30% 100%,
+          0% 70%,
+          0% 30%
+        );
+      }
+
+      .arrow {
+        position: absolute;
+        transition: 0.2s;
+        background-color: #2761c3;
+        top: 35%;
+        width: 11%;
+        height: 30%;
+      }
+
+      #leftArrow {
+        left: -13.5%;
+        -webkit-clip-path: polygon(100% 0, 100% 100%, 0 50%);
+      }
+
+      #rightArrow {
+        -webkit-clip-path: polygon(100% 49%, 0 0, 0 100%);
+        left: 113%;
+      }
+
+      .start:hover #rightArrow {
+        background-color: #27c39f;
+        left: -15%;
+        animation: 0.6s ease-in-out both infinite alternate rightArrow8;
+      }
+
+      .start:hover #leftArrow {
+        background-color: #27c39f;
+        left: 113%;
+        animation: 0.6s ease-in-out both infinite alternate leftArrow8;
+      }
+
+      .corner {
+        position: absolute;
+        width: 4em;
+        height: 4em;
+        background-color: #2761c3;
+        box-shadow: inset 1px 1px 8px #2781c3;
+        transform: scale(1) rotate(45deg);
+        transition: 0.2s;
+      }
+
+      #rightTop {
+        top: -1.98em;
+        left: 91%;
+      }
+
+      #leftTop {
+        top: -1.96em;
+        left: -3em;
+      }
+
+      #leftBottom {
+        top: 2.1em;
+        left: -2.15em;
+      }
+
+      #rightBottom {
+        top: 45%;
+        left: 88%;
+      }
+
+      .start:hover #leftTop {
+        animation: 0.1s ease-in-out 0.05s both changeColor8,
+          0.2s linear 0.4s both lightEffect8;
+      }
+
+      .start:hover #rightTop {
+        animation: 0.1s ease-in-out 0.15s both changeColor8,
+          0.2s linear 0.4s both lightEffect8;
+      }
+
+      .start:hover #rightBottom {
+        animation: 0.1s ease-in-out 0.25s both changeColor8,
+          0.2s linear 0.4s both lightEffect8;
+      }
+
+      .start:hover #leftBottom {
+        animation: 0.1s ease-in-out 0.35s both changeColor8,
+          0.2s linear 0.4s both lightEffect8;
+      }
+
+      .start:hover .corner {
+        transform: scale(1.25) rotate(45deg);
+      }
+
+      .start:hover #clip {
+        animation: 0.2s ease-in-out 0.55s both greenLight8;
+        --color: #27c39f;
+      }
+
+      @keyframes changeColor8 {
+        from {
+          background-color: #2781c3;
+        }
+
+        to {
+          background-color: #27c39f;
+        }
+      }
+
+      @keyframes lightEffect8 {
+        from {
+          box-shadow: 1px 1px 5px #27c39f;
+        }
+
+        to {
+          box-shadow: 0 0 2px #27c39f;
+        }
+      }
+
+      @keyframes greenLight8 {
+        from {
+        }
+
+        to {
+          box-shadow: inset 0px 0px 32px #27c39f;
+        }
+      }
+
+      @keyframes leftArrow8 {
+        from {
+          transform: translate(0px);
+        }
+
+        to {
+          transform: translateX(10px);
+        }
+      }
+
+      @keyframes rightArrow8 {
+        from {
+          transform: translate(0px);
+        }
+
+        to {
+          transform: translateX(-10px);
+        }
+      }
+
+      @import url("https://fonts.googleapis.com/css?family=Josefin+Sans:400,700&display=swap");
+
+      a {
+        color: brown;
+        text-decoration: none;
+      }
+
+      a:hover {
+        color: darkred;
+      }
+
+      body {
+        margin: 0;
+      }
+
+      .content {
+        display: flex;
+        font-family: "Josefin Sans", sans-serif;
+        flex-direction: column;
+        min-height: 100vh;
+        text-align: center;
+      }
+
+      .is-background {
+        background-color: orange;
+      }
+
+      .is-foreground {
+        color: black;
+      }
+
+      .is-vertical {
+        align-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .title {
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+      .is-background {
+        display: none;
+      }
+
+      @media screen and (max-width: 580px) {
+        .is-background {
+          display: block;
+          direction: rtl;
+        }
+
+        .ful-gam {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="ful-gam">
+      <div id="full" class="full">
+        <div id="loader">
+          <div class="ls-particles ls-part-1"></div>
+          <div class="ls-particles ls-part-2"></div>
+          <div class="ls-particles ls-part-3"></div>
+          <div class="ls-particles ls-part-4"></div>
+          <div class="ls-particles ls-part-5"></div>
+          <div class="lightsaber ls-left ls-green"></div>
+          <div class="lightsaber ls-right ls-red"></div>
+        </div>
+      </div>
+
+      <div id="center" class="center">
+        <h1>star Wars مرحبا بك في لعبه</h1>
+
+        <h2 style="color: #ffd700">:اختر مستوي اللعبة</h2>
+
+        <div id="difficulty-buttons">
+          <form action="" class="container">
+            <input
+              class="input-btn difficulty-button"
+              type="radio"
+              id="valueIs-1"
+              data-difficulty="0"
+              name="valueIs-radio"
+              checked=""
+              value="valueIs-1"
+            />
+            <label class="neon-btn" for="valueIs-1">
+              <span class="span"></span>
+              <span class="txt">سهل </span>
+            </label>
+
+            <input
+              class="input-btn difficulty-button"
+              type="radio"
+              id="valueIs-2"
+              data-difficulty="1"
+              name="valueIs-radio"
+              value="valueIs-2"
+            />
+            <label class="neon-btn" for="valueIs-2">
+              <span class="span"></span>
+              <span class="txt">متوسط </span>
+            </label>
+            <input
+              class="input-btn difficulty-button"
+              type="radio"
+              id="valueIs-3"
+              name="valueIs-radio"
+              data-difficulty="2"
+              value="valueIs-3"
+            />
+            <label class="neon-btn" for="valueIs-3">
+              <span class="span"></span>
+              <span class="txt">صعب </span>
+            </label>
+          </form>
+          <button id="mute-button" class="game-button">كتم الصوت</button>
+        </div>
+
+        <audio id="my-audio">
+          <source src="sts.wav" type="audio/mpeg" />
+        </audio>
+
+        <button id="start-button" style="display: none" class="start">
+          ابدا اللعبة
+          <div id="clip">
+            <div id="leftTop" class="corner"></div>
+            <div id="rightBottom" class="corner"></div>
+            <div id="rightTop" class="corner"></div>
+            <div id="leftBottom" class="corner"></div>
+          </div>
+          <span id="rightArrow" class="arrow"></span>
+          <span id="leftArrow" class="arrow"></span>
+        </button>
+      </div>
+
+      <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        <div id="game-controls">
+          <button id="pause-button" class="game-button">إيقاف مؤقت</button>
+          <button id="back-button" class="game-button">الخروج</button>
+          <button id="mute-button" class="game-button">كتم الصوت</button>
+        </div>
+      </div>
+
+      <audio id="audio" autoplay loop src="cyber-war-126419.mp3"></audio>
+
+      <div id="popup">
+        <div id="popup-content">
+          <h2>انتهت اللعبة</h2>
+          <p>نتيجتك هي: <span id="popup-score"></span></p>
+          <button id="popup-button">العودة إلى الشاشة الرئيسية</button>
+        </div>
+      </div>
+
+      <img
+        id="explosion-image"
+        class="explosion"
+        src="explosion-animation.gif"
+        alt="Explosion"
+      />
+    </div>
+
+    <main class="is-background">
+      <div class="content is-foreground is-vertical">
+        <h1 class="title">اللعبه حاليا لا تدعم الهواتف</h1>
+        <p>
+          سيتم تشغيل هذا الموقع في أقرب وقت ممكن ، تحقق منه لاحقًا
+          <br />تواصل مع
+          <a href="https://www.facebook.com/fares.mary.94"> @mohamed ahmed </a>
+          للمساعدة
+        </p>
+      </div>
+    </main>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const difficultyButtons =
+          document.querySelectorAll(".difficulty-button");
+
+        Array.from(difficultyButtons).forEach((button) => {
+          button.addEventListener("click", function () {
+            // إزالة الألوان الحمراء من جميع الأزرار
+            Array.from(difficultyButtons).forEach((btn) => {
+              btn.removeAttribute("data-selected");
+            });
+
+            // إضافة اللون الأحمر للزر المحدد
+            this.setAttribute("data-selected", "true");
+          });
+        });
+      });
+      var audio = document.getElementById("my-audio"); // الحصول على عنصر الصوت
+      var startButton = document.getElementById("start-button");
+
+      startButton.addEventListener("click", function () {
+        if (audio.paused) {
+          audio.play();
+        } else {
+          audio.pause();
+        }
+      });
+
+      document.addEventListener("DOMContentLoaded", function () {
+        const welcomeMessage = document.querySelector("h1");
+        const difficultyButtons =
+          document.querySelectorAll(".difficulty-button");
+        const startButton = document.getElementById("start-button");
+        const gameContainer = document.getElementById("game-container");
+        const gameCanvas = document.getElementById("game-canvas");
+        const gameControls = document.getElementById("game-controls");
+        const pauseButton = document.getElementById("pause-button");
+        const backButton = document.getElementById("back-button");
+        const muteButton = document.getElementById("mute-button");
+
+        const popup = document.getElementById("popup");
+        const popupContent = document.getElementById("popup-content");
+        const popupScore = document.getElementById("popup-score");
+        const popupButton = document.getElementById("popup-button");
+        const center = document.getElementById("center");
+
+        const shipWidth = 100;
+        const shipHeight = 100;
+        const bulletWidth = 5;
+        const bulletHeight = 15;
+        const enemyWidth = 40;
+        const enemyHeight = 40;
+        const maxEnemyCount = 10;
+
+        const explosionImage = document.getElementById("explosion-image");
+        let explosionTimeout;
+
+        let shipX = gameCanvas.width / 2 - shipWidth / 2;
+        let bulletList = [];
+        let enemyList = [];
+        let score = 0;
+        let isGameOver = false;
+        let isPaused = false;
+        let isMuted = false;
+
+        let powerup = null;
+        let powerupWidth = 100;
+        let powerupHeight = 70;
+        let powerupSpeed = 5;
+        let hasPowerup = false;
+        let bulletPair = false;
+
+        let selectedDifficultyLevel = null;
+
+        setTimeout(function () {
+          var loader = document.getElementById("loader");
+          var full = document.getElementById("full");
+
+          var opacity = 1; // قيمة الشفافية الأولية
+
+          var fadeOutInterval = setInterval(function () {
+            opacity -= 0.1; // تقليل الشفافية بمقدار 0.1
+            loader.style.opacity = opacity;
+            full.style.opacity = opacity;
+
+            if (opacity <= 0) {
+              clearInterval(fadeOutInterval); // إيقاف تنفيذ تكرار تغيير الشفافية
+              loader.style.display = "none"; // إخفاء العنصر
+              full.style.display = "none"; // إخفاء العنصر
+            }
+          }, 100); // تغيير الشفافية كل 100 مللي ثانية (0.1 ثانية)
+        }, 3000); // تأخير لمدة 3 ثوانٍ (3000 مللي ثانية)
+
+        Array.from(difficultyButtons).forEach((button) => {
+          button.addEventListener("click", function () {
+            const difficulty = parseInt(this.getAttribute("data-difficulty"));
+            selectedDifficultyLevel = getDifficultyLevel(difficulty);
+            showStartButton();
+          });
+        });
+
+        startButton.addEventListener("click", function () {
+          hideWelcomeScreen();
+          startGame();
+          startButton.style.display = "none";
+          center.style.height = "0vh";
+          center.style.display = "none";
+        });
+
+        pauseButton.addEventListener("click", function () {
+          if (isPaused) {
+            resumeGame();
+          } else {
+            pauseGame();
+          }
+        });
+
+        backButton.addEventListener("click", function () {
+          location.reload();
+        });
+
+        popupButton.addEventListener("click", function () {
+          location.reload();
+        });
+
+        muteButton.addEventListener("click", function () {
+          isMuted = !isMuted;
+          updateMuteButton();
+          updateAudio();
+        });
+
+        function getDifficultyLevel(difficulty) {
+          const difficultyLevels = [
+            {
+              name: "سهل",
+              enemySpeed: 2,
+              maxEnemyCount: 5,
+              shipSpeed: 6,
+              bulletSpeed: 10,
+            },
+            {
+              name: "متوسط",
+              enemySpeed: 3,
+              maxEnemyCount: 10,
+              shipSpeed: 7,
+              bulletSpeed: 14,
+            },
+            {
+              name: "صعب",
+              enemySpeed: 4,
+              maxEnemyCount: 15,
+              shipSpeed: 8,
+              bulletSpeed: 18,
+            },
+          ];
+
+          return difficultyLevels[difficulty];
+        }
+
+        function showStartButton() {
+          startButton.style.display = "inline-block";
+        }
+
+        function hideWelcomeScreen() {
+          welcomeMessage.style.display = "none";
+          Array.from(difficultyButtons).forEach((button) => {
+            button.style.display = "none";
+          });
+        }
+
+        function startGame() {
+          gameContainer.style.display = "block";
+          gameCanvas.width = window.innerWidth;
+          gameCanvas.height = window.innerHeight - gameControls.offsetHeight;
+          shipX = gameCanvas.width / 2 - shipWidth / 2;
+          bulletList = [];
+          enemyList = [];
+          score = 0;
+          isGameOver = false;
+          isPaused = false;
+          updateAudio();
+          updateMuteButton();
+          gameLoop();
+
+          spawnPowerup();
+        }
+
+        function spawnPowerup() {
+          if (!powerup) {
+            const powerupX = Math.random() * (gameCanvas.width - powerupWidth);
+            const powerupY = 0;
+            powerup = { x: powerupX, y: powerupY };
+          }
+        }
+
+        function pauseGame() {
+          isPaused = true;
+          pauseButton.innerText = "استئناف";
+        }
+
+        function resumeGame() {
+          isPaused = false;
+          pauseButton.innerText = "إيقاف مؤقت";
+          gameLoop();
+        }
+
+        function endGame() {
+          isGameOver = true;
+          isPaused = false;
+          pauseButton.innerText = "إيقاف مؤقت";
+          showPopup();
+        }
+
+        function showPopup() {
+          popupScore.innerText = score;
+          popup.style.display = "block";
+          var audio = new Audio("gameover.wav");
+          audio.play();
+        }
+
+        function gameLoop() {
+          if (isGameOver || isPaused) {
+            return;
+          }
+
+          update();
+          draw();
+          requestAnimationFrame(gameLoop);
+        }
+
+        function update() {
+          const shipSpeed = selectedDifficultyLevel.shipSpeed;
+          const bulletSpeed = selectedDifficultyLevel.bulletSpeed;
+          const enemySpeed = selectedDifficultyLevel.enemySpeed;
+          const maxEnemyCount = selectedDifficultyLevel.maxEnemyCount;
+
+          if (!isPaused) {
+            if (keys["ArrowLeft"]) {
+              shipX -= shipSpeed;
+            }
+            if (keys["ArrowRight"]) {
+              shipX += shipSpeed;
+            }
+
+            for (let i = 0; i < bulletList.length; i++) {
+              bulletList[i].y -= bulletSpeed;
+
+              for (let j = 0; j < enemyList.length; j++) {
+                if (
+                  bulletList[i].x + bulletWidth > enemyList[j].x &&
+                  bulletList[i].x < enemyList[j].x + enemyWidth &&
+                  bulletList[i].y < enemyList[j].y + enemyHeight
+                ) {
+                  const bulletX = bulletList[i].x;
+                  const bulletY = bulletList[i].y;
+                  enemyList.splice(j, 1);
+                  bulletList.splice(i, 1);
+                  score++;
+                  showExplosion(bulletX, bulletY);
+                  playSound("sniper-rifle-firing-shot-1-39789.mp3");
+                  break;
+                }
+              }
+
+              if (bulletList[i] && bulletList[i].y < 0) {
+                bulletList.splice(i, 1);
+              }
+            }
+
+            for (let i = 0; i < enemyList.length; i++) {
+              enemyList[i].y += enemySpeed;
+
+              if (
+                shipX + shipWidth > enemyList[i].x &&
+                shipX < enemyList[i].x + enemyWidth &&
+                gameCanvas.height - shipHeight < enemyList[i].y + enemyHeight
+              ) {
+                endGame();
+              }
+
+              if (enemyList[i] && enemyList[i].y > gameCanvas.height) {
+                enemyList.splice(i, 1);
+              }
+            }
+
+            if (enemyList.length < maxEnemyCount) {
+              const enemyX = Math.random() * (gameCanvas.width - enemyWidth);
+              enemyList.push({ x: enemyX, y: 0 });
+            }
+          }
+
+          if (powerup) {
+            powerup.y += powerupSpeed;
+
+            if (
+              shipX + shipWidth > powerup.x &&
+              shipX < powerup.x + powerupWidth &&
+              gameCanvas.height - shipHeight < powerup.y + powerupHeight
+            ) {
+              hasPowerup = true;
+              powerup = null;
+              let powerupTimeout;
+              powerupTimeout = setTimeout(spawnPowerup, 5000);
+              increasePlayerSpeed();
+              bulletPair = true;
+            }
+
+            if (powerup && powerup.y > gameCanvas.height) {
+              powerup = null;
+              powerupTimeout = setTimeout(spawnPowerup, 5000);
+            }
+          }
+        }
+
+        function increasePlayerSpeed() {
+          if (hasPowerup) {
+            const shipSpeed = selectedDifficultyLevel.shipSpeed;
+            const bulletSpeed = selectedDifficultyLevel.bulletSpeed;
+
+            selectedDifficultyLevel.shipSpeed = shipSpeed * 2;
+            selectedDifficultyLevel.bulletSpeed = bulletSpeed * 2;
+
+            setTimeout(resetPlayerSpeed, 5000);
+            var audio = new Audio("roud.wav");
+            audio.play();
+          }
+        }
+
+        function resetPlayerSpeed() {
+          const shipSpeed = selectedDifficultyLevel.shipSpeed;
+          const bulletSpeed = selectedDifficultyLevel.bulletSpeed;
+
+          selectedDifficultyLevel.shipSpeed = shipSpeed / 2;
+          selectedDifficultyLevel.bulletSpeed = bulletSpeed / 2;
+
+          hasPowerup = false;
+        }
+
+        function draw() {
+          const context = gameCanvas.getContext("2d");
+          context.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+
+          const shipImage = new Image();
+          shipImage.src = "spaceship-png-icon-17270.png";
+          context.drawImage(
+            shipImage,
+            shipX,
+            gameCanvas.height - shipHeight,
+            shipWidth,
+            shipHeight
+          );
+
+          const bulletImage = new Image();
+          bulletImage.src = "PngItem_709207.png";
+          for (let i = 0; i < bulletList.length; i++) {
+            context.drawImage(
+              bulletImage,
+              bulletList[i].x,
+              bulletList[i].y,
+              bulletWidth,
+              bulletHeight
+            );
+          }
+
+          const enemyImage = new Image();
+          enemyImage.src = "32295-6-space-invaders-transparent-background.png";
+          for (let i = 0; i < enemyList.length; i++) {
+            context.drawImage(
+              enemyImage,
+              enemyList[i].x,
+              enemyList[i].y,
+              enemyWidth,
+              enemyHeight
+            );
+          }
+
+          context.fillStyle = "#fff";
+          context.font = "20px Arial";
+          context.fillText("النتيجة: " + score, 10, 30);
+
+          const powerupImage = new Image();
+          powerupImage.src = "powerup.gif";
+          if (powerup) {
+            context.drawImage(
+              powerupImage,
+              powerup.x,
+              powerup.y,
+              powerupWidth,
+              powerupHeight
+            );
+          }
+
+          if (hasPowerup && bulletPair) {
+            const bulletPairOffset = 20;
+            for (let i = 0; i < bulletList.length; i++) {
+              const bulletX1 = bulletList[i].x - bulletPairOffset;
+              const bulletX2 = bulletList[i].x + bulletPairOffset;
+
+              context.drawImage(
+                bulletImage,
+                bulletX1,
+                bulletList[i].y,
+                bulletWidth,
+                bulletHeight
+              );
+
+              context.drawImage(
+                bulletImage,
+                bulletX2,
+                bulletList[i].y,
+                bulletWidth,
+                bulletHeight
+              );
+            }
+          }
+        }
+
+        function updateAudio() {
+          const audio = document.getElementById("audio");
+          if (isMuted) {
+            audio.pause();
+          } else {
+            audio.play();
+          }
+        }
+
+        function updateMuteButton() {
+          if (isMuted) {
+            muteButton.innerHTML = "تفعيل الصوت";
+          } else {
+            muteButton.innerHTML = "كتم الصوت";
+          }
+        }
+
+        function playSound(soundFile) {
+          if (!isMuted) {
+            const audio = new Audio(soundFile);
+            audio.play();
+          }
+        }
+
+        function showExplosion(x, y) {
+          explosionImage.style.display = "block";
+          explosionImage.style.left = (x || 0) + "px";
+          explosionImage.style.top = (y || 0) + "px";
+          explosionImage.style.visibility = "visible";
+
+          clearTimeout(explosionTimeout);
+          explosionTimeout = setTimeout(hideExplosion, 1000);
+        }
+
+        function hideExplosion() {
+          explosionImage.style.visibility = "hidden";
+          explosionImage.style.display = "none";
+        }
+
+        const keys = {};
+
+        document.addEventListener("keydown", function (event) {
+          keys[event.key] = true;
+
+          if (event.key === " ") {
+            const bulletX = shipX + shipWidth / 2 - bulletWidth / 2;
+            const bulletY = gameCanvas.height - shipHeight;
+            bulletList.push({ x: bulletX, y: bulletY });
+          }
+        });
+
+        document.addEventListener("keyup", function (event) {
+          keys[event.key] = false;
+        });
+
+        window.addEventListener("resize", function () {
+          if (!isGameOver && !isPaused) {
+            gameCanvas.width = window.innerWidth;
+            gameCanvas.height = window.innerHeight - gameControls.offsetHeight;
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
